@@ -1,79 +1,73 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-struct process {
-    int pid;
-    int arrival_time;
-    int burst_time;
-    int priority;
-    int completion_time;
-    int waiting_time;
-    int turnaround_time;
-};
+typedef struct Process
+{
+	int pid;
+	int arrival;
+	int burst;
+	int done;
+} Process;
 
-// Sort by Priority (Lower Value = Higher Priority), then by Arrival Time
-void sortbypriority(struct process p[], int n) {
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (p[i].priority > p[j].priority || 
-                (p[i].priority == p[j].priority && p[i].arrival_time > p[j].arrival_time)) {
-                struct process temp = p[i];
-                p[i] = p[j];
-                p[j] = temp;
-            }
-        }
-    }
+static int time=0;
+
+int compare(const void * p1,const void* p2)
+{
+	return ((Process*)p1)->arrival>((Process*)p2)->arrival;
 }
 
-// Calculate Completion Time, Turnaround Time, and Waiting Time
-void calculatetimes(struct process p[], int n) {
-    int time = 0;
+int main()
+{
+	int n;
+	printf("Enter number of processes: ");
+	scanf("%d",&n);
+	printf("Enter pid arrival and burst:\n");
+	Process processes[n];
 
-    for (int i = 0; i < n; i++) {
-        if (time < p[i].arrival_time) {
-            time = p[i].arrival_time;  // Adjust CPU idle time
-        }
-        p[i].completion_time = time + p[i].burst_time;
-        p[i].turnaround_time = p[i].completion_time - p[i].arrival_time;
-        p[i].waiting_time = p[i].turnaround_time - p[i].burst_time;
+	for(int i=0;i<n;i++)
+	{
+		scanf("%d %d %d",&processes[i].pid,&processes[i].arrival,&processes[i].burst);
+		processes[i].done=0;
+	}
 
-        time = p[i].completion_time;  // Move to next process
-    }
-}
+	qsort(processes,n,sizeof(Process),compare);
 
-// Print Process Table and Averages
-void print(struct process p[], int n) {
-    int total_tat = 0, total_wt = 0;
+	int done=0;
+	int order[n];
+	time=processes[0].arrival;
+	while(done<n)
+	{
+		int proc=0;
+		int min=999999;
+		int found=0;
+		for(int i=0;i<n;i++)
+		{
+			if(!processes[i].done && processes[i].arrival<=time && processes[i].burst<min)
+			{
+				proc=i;
+				min=processes[i].burst;
+				found=1;
+			}	
+		}
 
-    printf("\nPID\tAT\tBT\tP\tCT\tTAT\tWT\n");
-    printf("-------------------------------------------------\n");
-    for (int i = 0; i < n; i++) {
-        total_tat += p[i].turnaround_time;
-        total_wt += p[i].waiting_time;
-        printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\n", 
-               p[i].pid, p[i].arrival_time, p[i].burst_time, p[i].priority, 
-               p[i].completion_time, p[i].turnaround_time, p[i].waiting_time);
-    }
-    
-    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
-    printf("Average Turnaround Time: %.2f\n", (float)total_tat / n);
-}
+		if(processes[proc].done)
+		{
+			printf("%d %d\n",time,done);
+			time++;
+			continue;
+		}
 
-int main() {
-    int n;
-    printf("Enter the number of processes: ");
-    scanf("%d", &n);
+		printf("%d %d\n",proc,time);
+		time+=processes[proc].burst;
+		order[done++]=processes[proc].pid;
+		processes[proc].done=1;
 
-    struct process p[n];
+	}
 
-    for (int i = 0; i < n; i++) {
-        p[i].pid = i + 1;  // Change PID to start from 1
-        printf("Enter Arrival Time, Burst Time, and Priority for Process %d: ", p[i].pid);
-        scanf("%d %d %d", &p[i].arrival_time, &p[i].burst_time, &p[i].priority);
-    }
+	for(int i=0;i<n;i++)
+	{
+		printf("%d ",order[i]);
+	}
+	printf("\n");
 
-    sortbypriority(p, n);
-    calculatetimes(p, n);
-    print(p, n);
-
-    return 0;
 }

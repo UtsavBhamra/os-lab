@@ -8,30 +8,38 @@ int count=5;
 
 pthread_t reader1,reader2,writer1,writer2;
 
-void *reader(void *p){
+void* reader(void *p){
     sem_wait(&mutex);
     readercount++;
+
     if(readercount==1){
         sem_wait(&wrt);
     }
     sem_post(&mutex);
 
-    printf("Reader %s is reading\n",(char*)p);
-    
+    printf("Reader %s is reading.\n",(char *)p);
+
     sem_wait(&mutex);
-    printf("Reader %s Completed Reading\n", (char *)p);
     readercount--;
-    if (readercount == 0) 
+
+    if(readercount==0){
         sem_post(&wrt);
-    sem_post(&mutex); 
+    }
+    printf("Reader %s has finished reading\n",(char *)p);
+
+    sem_post(&mutex);
 }
 
-void *writer(void *p){
-    printf("Writer %s is Waiting\n", (char *)p);
+void* writer(void* p){
+    printf("Writer %s is waiting\n",(char *)p);
+
     sem_wait(&wrt);
-    printf("Writer %s is writing\n", (char *)p);
-    sem_post(&wrt); 
-    printf("Writing %s Completed\n", (char *)p);
+
+    printf("Writer %s is writing\n",(char *)p);
+
+    sem_post(&wrt);
+
+    printf("Writer %s has finished writing\n",(char *)p);
 }
 
 
@@ -45,5 +53,6 @@ int main(){
         pthread_create(&writer1,NULL,writer,"1");
         pthread_create(&writer2,NULL,writer,"2");
     }
+
     return 0;
 }
